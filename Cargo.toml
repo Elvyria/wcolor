@@ -1,0 +1,16 @@
+[package]
+name = "wcolor"
+version = "0.1.0"
+authors = ["Elvyria"]
+description = "Lightweight color picker for Windows"
+homepage = "https://github.com/Elvyria/wcolor"
+readme = "README.md"
+keywords = ["color", "utility", "color-picker", "windows"]
+categories = ["command-line-utilities"]
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+failure = "~0.1"
+structopt = "0.3"
+winapi = { version = "~0.3", features = ["winuser", "stringapiset", "winnls", "impl-default", "d2d1"] }
