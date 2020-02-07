@@ -1,3 +1,5 @@
+use crate::color::Color;
+
 use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
@@ -25,14 +27,10 @@ pub unsafe extern "system" fn low_mouse_proc(code: i32, w_param: WPARAM, l_param
     return CallNextHookEx(null_mut(), code, w_param, l_param);
 }
 
-pub fn color_at(hdc: HDC, x: i32, y: i32) -> u32 {
-    let color: COLORREF;
+pub fn color_at(hdc: HDC, x: i32, y: i32) -> Color {
+    let color: COLORREF = unsafe { GetPixel(hdc, x, y) };
 
-    unsafe {
-        color = GetPixel(hdc, x, y);
-    }
-
-    color.swap_bytes() >> 8
+    Color(color.swap_bytes() >> 8)
 }
 
 pub fn copy_to_clipboard(text: &str) {
