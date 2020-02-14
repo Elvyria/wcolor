@@ -4,63 +4,66 @@ use crate::win;
 use std::io::Error;
 use std::ptr::{null, null_mut};
 
-use winapi::shared::minwindef::LRESULT;
-use winapi::shared::windef::HWND;
-use winapi::um::libloaderapi::*;
-
 use winapi::Interface;
-use winapi::shared::winerror::*;
-use winapi::shared::windef::{RECT, POINT};
-use winapi::um::winuser::{WNDCLASSW, RegisterClassW};
+
+use winapi::um::dcommon::{D2D1_PIXEL_FORMAT, D2D1_ALPHA_MODE_PREMULTIPLIED};
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::*;
 use winapi::um::d2d1::*;
+// use winapi::um::d2d1_2::*;
 
+use winapi::shared::winerror::{HRESULT, S_OK, E_POINTER};
+use winapi::shared::windef::{HWND, RECT, POINT};
+use winapi::shared::minwindef::LRESULT;
 use winapi::shared::dxgiformat::DXGI_FORMAT_B8G8R8A8_UNORM;
-use winapi::um::dcommon::{D2D1_PIXEL_FORMAT, D2D1_ALPHA_MODE_PREMULTIPLIED};
 use winapi::shared::d3d9types::D3DCOLORVALUE;
+
 
 pub struct Preview {
     pub hwnd: HWND,
-    factory: *mut ID2D1Factory,
     render_target: *mut ID2D1HwndRenderTarget,
     brush: *mut ID2D1SolidColorBrush,
     ellipse: D2D1_ELLIPSE,
 }
 
-static D2D1_COLOR_TRANSPARENT: D2D1_COLOR_F = D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
+unsafe impl Send for Preview {}
 
 impl Preview {
-    pub fn set_color(&mut self, color: Color) {
+    pub fn set_color(&mut self, color: Color) -> bool {
         let brush_color = unsafe { (*self.brush).GetColor() };
         let d3d_color = D3DCOLORVALUE::from(color);
 
         if brush_color.r == d3d_color.r || brush_color.g == d3d_color.g || brush_color.b == d3d_color.b {
-            return
+            return false;
         }
 
         unsafe { (*self.brush).SetColor(&d3d_color as *const _) };
+
+        return true;
     }
 
-    pub unsafe fn render(&mut self) {
-        let target = &*self.render_target;
-        let color = (*self.brush).GetColor();
+    pub fn draw(&mut self) -> HRESULT {
+        if self.render_target.is_null() || self.brush.is_null() {
+            return E_POINTER;
+        }
 
-        target.BeginDraw();
+        unsafe {
+            let target = &*self.render_target;
+            let color = (*self.brush).GetColor();
 
-        target.FillEllipse(&self.ellipse as *const _, self.brush as *mut ID2D1Brush);
+            target.BeginDraw();
 
-        // let negative = D2D1_COLOR_F { r: 1.0 - color.r, g: 1.0 - color.g, b: 1.0 - color.b, a: 1.0 };
-        // (*self.brush).SetColor(&negative as *const _);
+            target.FillEllipse(&self.ellipse as *const _, self.brush as *mut ID2D1Brush);
 
-        // target.DrawEllipse(&self.ellipse as *const _, self.brush as *mut ID2D1Brush, 1.2, null_mut());
+            let negative = D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+            (*self.brush).SetColor(&negative as *const _);
 
-        // (*self.brush).SetColor(&color as *const _);
+            target.DrawEllipse(&self.ellipse as *const _, self.brush as *mut ID2D1Brush, 3.0, null_mut());
 
-        let _error = target.EndDraw(null_mut(), null_mut());
+            (*self.brush).SetColor(&color as *const _);
 
-        // if error != S_OK {
-            // panic!(error);
-        // }
+            target.EndDraw(null_mut(), null_mut())
+        }
     }
 
     pub unsafe fn release(&mut self) {
@@ -69,11 +72,6 @@ impl Preview {
             (*self.render_target).Release();
 
             self.brush = null_mut();
-            self.render_target = null_mut();
-        }
-
-        if !self.factory.is_null() {
-            (*self.factory).Release();
             self.render_target = null_mut();
         }
     }
@@ -87,12 +85,13 @@ unsafe extern "system" fn window_proc(hwnd: HWND, msg: u32, wparam: usize, lpara
             let ps: *mut PAINTSTRUCT = null_mut();
             BeginPaint(hwnd, ps);
 
-            preview.render();
+            preview.draw();
 
             EndPaint(hwnd, ps);
             return 0;
         }
         WM_DESTROY => {
+            preview.release();
             PostQuitMessage(0);
             return 0;
         }
@@ -144,22 +143,26 @@ pub fn create_preview() -> Result<Preview, Error> {
         return Err(Error::last_os_error().into());
     }
 
-    unsafe { SetLayeredWindowAttributes(hwnd, 0, 255, ULW_COLORKEY | LWA_ALPHA) };
+    unsafe { SetLayeredWindowAttributes(hwnd, 0, 255, ULW_COLORKEY | LWA_ALPHA); }
 
     // TODO: Handle me gently
     let factory = create_factory().unwrap();
     let render_target = create_render_target(&hwnd, unsafe { &*factory }).unwrap();
 
+    unsafe { (*factory).Release(); }
+
     let mut brush: *mut ID2D1SolidColorBrush = null_mut();
 
-    let red = D2D1_COLOR_F { r: 1.0, g: 0.0, b: 0.0, a: 1.0 };
-    unsafe { (*render_target).CreateSolidColorBrush(&red, null_mut(), &mut brush as *mut *mut ID2D1SolidColorBrush as _) };
+    let color_transparent = D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
+    unsafe {
+        (*render_target).CreateSolidColorBrush(&color_transparent, null_mut(), &mut brush as *mut *mut ID2D1SolidColorBrush as _);
+    }
 
     let radius = 10.0;
     let center = D2D1_POINT_2F { x: radius, y: radius };
     let ellipse = D2D1_ELLIPSE { point: center, radiusX: radius, radiusY: radius };
 
-    Ok(Preview { hwnd, factory, render_target, brush, ellipse })
+    Ok(Preview { hwnd, render_target, brush, ellipse })
 }
 
 fn create_factory() -> Result<*mut ID2D1Factory, HRESULT> {
