@@ -1,13 +1,6 @@
-use std::str::FromStr;
-use std::io::{Error, ErrorKind};
 use winapi::shared::d3d9types::D3DCOLORVALUE;
 
 pub struct Color(pub u32);
-
-pub enum ColorFormat {
-    HEX,
-    RGB,
-}
 
 impl Color {
     pub fn to_rgb(self) -> (u8, u8, u8)  {
@@ -36,17 +29,5 @@ impl From<D3DCOLORVALUE> for Color {
         let b = (color.b * 255.0) as u32;
 
         Color((b << 16) | (g << 8) | r)
-    }
-}
-
-impl FromStr for ColorFormat {
-    type Err = Error;
-
-    fn from_str(format: &str) -> Result<Self, Self::Err> {
-        match format.to_uppercase().as_ref() {
-            "HEX" => Ok(ColorFormat::HEX),
-            "RGB" => Ok(ColorFormat::RGB),
-            _ => Err(Error::new(ErrorKind::InvalidInput, "Color format is not supported")),
-        }
     }
 }

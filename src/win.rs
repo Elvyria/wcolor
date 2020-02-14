@@ -5,10 +5,11 @@ use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
 
-use winapi::shared::minwindef::{LPARAM, LRESULT, WPARAM};
-use winapi::shared::windef::{HDC, COLORREF};
 use winapi::um::wingdi::GetPixel;
 use winapi::um::winuser::*;
+
+use winapi::shared::minwindef::{LPARAM, LRESULT, WPARAM};
+use winapi::shared::windef::{HDC, COLORREF};
 
 // Synchronous. Must be called in a separate thread.
 pub unsafe extern "system" fn low_mouse_proc(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
@@ -16,7 +17,7 @@ pub unsafe extern "system" fn low_mouse_proc(code: i32, w_param: WPARAM, l_param
         return CallNextHookEx(null_mut(), code, w_param, l_param);
     }
 
-    match w_param as _ {
+    match w_param as u32 {
         WM_LBUTTONDOWN => {
             PostQuitMessage(0);
             return -1;
