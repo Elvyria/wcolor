@@ -6,10 +6,27 @@ use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
 
 use winapi::um::wingdi::GetPixel;
+use winapi::um::winnt::HRESULT;
 use winapi::um::winuser::*;
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, WPARAM};
 use winapi::shared::windef::{HDC, COLORREF};
+use winapi::shared::winerror::S_OK;
+
+// TODO: Try trait should be able to replace this macro in future
+// https://doc.rust-lang.org/std/ops/trait.Try.html
+pub fn hr(code: HRESULT) -> Result<(), HRESULT> {
+    match code {
+        S_OK => Ok(()),
+        _ => Err(code),
+    }
+}
+
+macro_rules! void {
+    ($p:expr, $t:ty) => {
+        &mut $p as *mut *mut $t as _
+    };
+}
 
 // Synchronous. Must be called in a separate thread.
 pub unsafe extern "system" fn low_mouse_proc(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {

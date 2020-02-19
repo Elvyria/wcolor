@@ -1,6 +1,7 @@
+#[macro_use]
+mod win;
 mod color;
 mod preview;
-mod win;
 
 use color::ColorFormat;
 use preview::Preview;
