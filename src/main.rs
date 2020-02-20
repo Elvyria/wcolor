@@ -17,28 +17,24 @@ use winapi::um::processthreadsapi::GetCurrentThreadId;
 
 #[derive(StructOpt)]
 struct Args {
-    #[structopt(short = "f", long, possible_values = &["HEX", "rgb"], default_value = "HEX")]
-    format: ColorFormat,
+    #[structopt(short = "f", long = "format", possible_values = &["HEX", "hex", "RGB"], default_value = "HEX")]
+    format: String,
 
     #[structopt(short = "n", long = "no-preview")]
     no_preview: bool,
 
-    #[structopt(short = "c", long)]
+    #[structopt(short = "c", long = "clipboard")]
     clipboard: bool,
 }
 
-
 fn main() {
-    let args = Args::from_args();
+    let args: Args = Args::from_args();
+
+    //TODO: Probably not the right way to it
+    let format = args.format;
+    let clipboard = args.clipboard;
 
     let thread_id = unsafe { GetCurrentThreadId() };
-
-    // TODO: Handle me gently
-    let mut preview = preview::create_preview().unwrap();
-
-    unsafe {
-        SetWindowLongPtrW(preview.hwnd, 0 , &mut preview as *mut Preview as _);
-    }
 
     thread::spawn(move || unsafe {
         let hook = SetWindowsHookExW(WH_MOUSE_LL, Some(win::low_mouse_proc), null_mut(), 0);
@@ -55,59 +51,61 @@ fn main() {
         let color = win::color_at(dc, p.x, p.y);
         ReleaseDC(null_mut(), dc);
 
-        println!("#{:X}", color.0);
+        let output = match format.as_str() {
+            "HEX" => { format!("#{:X}", color.0) },
+            "hex" => { format!("#{:x}", color.0) },
+            "RGB" => {
+                let (r, g, b) = color.to_rgb();
+                format!("{}, {}, {}", r, g, b)
+            }
+            _ => { unreachable!() }
+        };
+
+        if clipboard {
+            win::copy_to_clipboard(&output);
+        }
+
+        println!("{}", output);
 
         PostThreadMessageW(thread_id, WM_QUIT, 0,0);
     });
 
-    let delay = Duration::from_secs(1/30);
-    let mut msg = MSG::default();
-    let mut pt: POINT = POINT::default();
+    if !args.no_preview {
+        // TODO: Handle me gently
+        let mut preview = preview::create_preview().unwrap();
 
-    unsafe {
-        let dc = GetDC(null_mut());
-
-        loop {
-            if PeekMessageW(&mut msg, null_mut(), 0, 0, PM_REMOVE) != 0 {
-                DispatchMessageW(&msg);
-                if msg.message == WM_QUIT {
-                    break
-                }
-            }
-
-            GetCursorPos(&mut pt);
-            let color = win::color_at(dc, pt.x, pt.y);
-            preview.set_color(color);
-            preview.render();
-            // MoveWindow(preview.hwnd, pt.x + 20, pt.y + 20, 32, 32, 1);
-            SetWindowPos(preview.hwnd, null_mut(), pt.x + 20, pt.y + 20, 0, 0, SWP_NOSIZE | SWP_NOREDRAW | SWP_ASYNCWINDOWPOS);
-
-            // thread::sleep(delay);
+        unsafe {
+            SetWindowLongPtrW(preview.hwnd, 0 , &mut preview as *mut Preview as _);
         }
 
-        ReleaseDC(null_mut(), dc);
-        preview.release();
+        thread::spawn(move || {
+            let delay = Duration::from_millis(5);
+
+            let dc = unsafe { GetDC(null_mut()) };
+            let mut pt = POINT::default();
+
+            loop {
+                unsafe {
+                    GetCursorPos(&mut pt);
+                    SetWindowPos(preview.hwnd, null_mut(), pt.x + 10, pt.y + 15, 0, 0, SWP_NOSIZE);
+                }
+
+                let color = win::color_at(dc, pt.x, pt.y);
+                if preview.set_color(color) {
+                    preview.draw();
+                }
+
+                thread::sleep(delay);
+            }
+        });
     }
 
-    // unsafe {
-        // while GetMessageW(&mut msg, null_mut(), 0, 0) != 0 {
-            // DispatchMessageW(&msg);
-        // }
+    let mut msg = MSG::default();
 
-        // preview.release();
-    // }
-
-    // let delay = Duration::from_secs(1/30);
-    // let dc = unsafe { GetDC(null_mut()) };
-    // let mut p = POINT::default();
-
-    // loop {
-    // unsafe { GetCursorPos(&mut p); }
-    // let color = win::color_at(dc, p.x, p.y);
-    // unsafe { preview::set_color(color); }
-
-    // thread::sleep(delay);
-    // }
-    // unsafe { ReleaseDC(null_mut(), dc) };
+    unsafe {
+        while GetMessageW(&mut msg, null_mut(), 0, 0) != 0 {
+            DispatchMessageW(&msg);
+        }
+    }
 
 }
