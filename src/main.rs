@@ -3,8 +3,7 @@ mod win;
 mod color;
 mod preview;
 
-use color::ColorFormat;
-use preview::Preview;
+use crate::preview::Preview;
 
 use std::ptr::null_mut;
 use std::thread;

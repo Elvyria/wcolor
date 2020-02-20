@@ -11,7 +11,6 @@ license = "MIT"
 edition = "2018"
 
 [dependencies]
-# failure = "~0.1"
 structopt = "0.3"
-winapi = { version = "~0.3", features = ["winuser", "stringapiset", "winnls", "impl-default", "d2d1"] }
 wio = "0.2"
+winapi = { version = "0.3", features = ["winuser", "stringapiset", "winnls", "impl-default", "dcomp", "d2d1", "d2d1_2", "d3d11", "dxgi1_2", "dxgi1_3"] }
