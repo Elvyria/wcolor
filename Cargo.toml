@@ -14,3 +14,4 @@ edition = "2018"
 # failure = "~0.1"
 structopt = "0.3"
 winapi = { version = "~0.3", features = ["winuser", "stringapiset", "winnls", "impl-default", "d2d1"] }
+wio = "0.2"

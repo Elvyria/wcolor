@@ -1,9 +1,11 @@
 use crate::color::Color;
 use crate::win;
 
+use std::ffi::OsStr;
 use std::io::Error;
 use std::ptr::{null, null_mut};
 
+use wio::wide::ToWide;
 use winapi::Interface;
 
 use winapi::um::dcommon::{D2D1_PIXEL_FORMAT, D2D1_ALPHA_MODE_PREMULTIPLIED};
@@ -102,8 +104,7 @@ unsafe extern "system" fn window_proc(hwnd: HWND, msg: u32, wparam: usize, lpara
 }
 
 pub fn create_preview() -> Result<Preview, Error> {
-    let class_name = win::to_wide("wcolor");
-    let title = win::to_wide("WColor");
+    let name = OsStr::new("wcolor").to_wide_null();
 
     let hwnd: HWND;
 
@@ -111,7 +112,7 @@ pub fn create_preview() -> Result<Preview, Error> {
         let hinstance = GetModuleHandleW(null_mut());
 
         let wnd_class = WNDCLASSW {
-            lpszClassName: class_name.as_ptr(),
+            lpszClassName: name.as_ptr(),
             lpfnWndProc: Some(window_proc),
             hInstance: hinstance,
             cbWndExtra: 8,
@@ -124,9 +125,9 @@ pub fn create_preview() -> Result<Preview, Error> {
         GetCursorPos(&mut p);
 
         hwnd = CreateWindowExW(
-            WS_EX_TOOLWINDOW | WS_EX_LAYERED | WS_EX_TOPMOST,
-            class_name.as_ptr(),
-            title.as_ptr(),
+            WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
+            name.as_ptr(),
+            name.as_ptr(),
             WS_POPUP | WS_VISIBLE,
             p.x + 20,
             p.y + 20,
