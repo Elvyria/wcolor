@@ -1,4 +1,7 @@
 # wcolor
+[![Latest Version](https://img.shields.io/crates/v/wcolor.svg)](https://crates.io/crates/wcolor)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Lightweight color picker for Windows written in rust.  
 Get color from anywhere on your screen with mouse click. 
 
