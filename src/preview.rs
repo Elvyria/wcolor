@@ -46,7 +46,7 @@ impl Preview {
         let brush_color = unsafe { (*self.brush).GetColor() };
         let d3d_color = D3DCOLORVALUE::from(color);
 
-        if brush_color.r == d3d_color.r || brush_color.g == d3d_color.g || brush_color.b == d3d_color.b {
+        if brush_color.r == d3d_color.r && brush_color.g == d3d_color.g && brush_color.b == d3d_color.b {
             return false;
         }
 
