@@ -4,6 +4,7 @@ mod color;
 mod preview;
 
 use crate::preview::Preview;
+use crate::color::Color;
 
 use std::ptr::null_mut;
 use std::thread;
@@ -51,8 +52,12 @@ fn main() {
         ReleaseDC(null_mut(), dc);
 
         let output = match format.as_str() {
-            "HEX" => { format!("#{:X}", color.0) },
-            "hex" => { format!("#{:x}", color.0) },
+            "HEX" => {
+                hex(color)
+            },
+            "hex" => {
+                hex(color).to_lowercase()
+            },
             "RGB" => {
                 let (r, g, b) = color.to_rgb();
                 format!("{}, {}, {}", r, g, b)
@@ -107,4 +112,18 @@ fn main() {
         }
     }
 
+}
+
+fn hex(color: Color) -> String {
+    let (r, g, b) = color.to_rgb();
+
+    if r < 16 && g < 16 && b < 16 {
+        return format!("#{:X}{:X}{:X}", r, g, b)
+    }
+
+    let r_str = if r < 16 { "0" } else { "" };
+    let g_str = if g < 16 { "0" } else { "" };
+    let b_str = if b < 16 { "0" } else { "" };
+
+    format!("#{}{:X}{}{:X}{}{:X}", r_str, r, g_str, g, b_str, b)
 }

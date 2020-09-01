@@ -213,7 +213,7 @@ checksum = "05c78687fb1a80548ae3250346c3db86a80a7cdd77bda190189f2d0a0987c81a"
 
 [[package]]
 name = "wcolor"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "structopt",
  "winapi",
