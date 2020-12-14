@@ -1,13 +1,47 @@
+use std::fmt;
+
 use winapi::shared::d3d9types::D3DCOLORVALUE;
 
 pub struct Color(pub u32);
 
 impl Color {
-    pub fn to_rgb(self) -> (u8, u8, u8)  {
+    pub fn to_rgb(&self) -> (u8, u8, u8)  {
         let r = (self.0 >> 16) as u8;
         let g = (self.0 >> 8) as u8;
         let b = self.0 as u8;
         (r, g, b)
+    }
+}
+
+impl fmt::LowerHex for Color {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (r, g, b) = self.to_rgb();
+
+        if r < 16 && g < 16 && b < 16 {
+            return write!(f, "#{:x}{:x}{:x}", r, g, b)
+        }
+
+        let r_str = if r < 16 { "0" } else { "" };
+        let g_str = if g < 16 { "0" } else { "" };
+        let b_str = if b < 16 { "0" } else { "" };
+
+        write!(f, "#{}{:x}{}{:x}{}{:x}", r_str, r, g_str, g, b_str, b)
+    }
+}
+
+impl fmt::UpperHex for Color {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (r, g, b) = self.to_rgb();
+
+        if r < 16 && g < 16 && b < 16 {
+            return write!(f, "#{:X}{:X}{:X}", r, g, b)
+        }
+
+        let r_str = if r < 16 { "0" } else { "" };
+        let g_str = if g < 16 { "0" } else { "" };
+        let b_str = if b < 16 { "0" } else { "" };
+
+        write!(f, "#{}{:X}{}{:X}{}{:X}", r_str, r, g_str, g, b_str, b)
     }
 }
 

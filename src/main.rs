@@ -4,7 +4,6 @@ mod color;
 mod preview;
 
 use crate::preview::Preview;
-use crate::color::Color;
 
 use std::ptr::null_mut;
 use std::thread;
@@ -30,7 +29,6 @@ struct Args {
 fn main() {
     let args: Args = Args::from_args();
 
-    //TODO: Probably not the right way to it
     let format = args.format;
     let clipboard = args.clipboard;
 
@@ -53,10 +51,10 @@ fn main() {
 
         let output = match format.as_str() {
             "HEX" => {
-                hex(color)
+                format!("{:X}", color)
             },
             "hex" => {
-                hex(color).to_lowercase()
+                format!("{:x}", color)
             },
             "RGB" => {
                 let (r, g, b) = color.to_rgb();
@@ -83,7 +81,7 @@ fn main() {
         }
 
         thread::spawn(move || {
-            let delay = Duration::from_millis(5);
+            let delay = Duration::from_nanos(1);
 
             let dc = unsafe { GetDC(null_mut()) };
             let mut pt = POINT::default();
@@ -91,7 +89,8 @@ fn main() {
             loop {
                 unsafe {
                     GetCursorPos(&mut pt);
-                    SetWindowPos(preview.hwnd, null_mut(), pt.x + 10, pt.y + 15, 0, 0, SWP_NOSIZE);
+
+                    SetWindowPos(preview.hwnd, null_mut(), pt.x + 10, pt.y + 15, 0, 0, SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOSIZE | SWP_NOREDRAW | SWP_NOZORDER);
                 }
 
                 let color = win::color_at(dc, pt.x, pt.y);
@@ -112,18 +111,4 @@ fn main() {
         }
     }
 
-}
-
-fn hex(color: Color) -> String {
-    let (r, g, b) = color.to_rgb();
-
-    if r < 16 && g < 16 && b < 16 {
-        return format!("#{:X}{:X}{:X}", r, g, b)
-    }
-
-    let r_str = if r < 16 { "0" } else { "" };
-    let g_str = if g < 16 { "0" } else { "" };
-    let b_str = if b < 16 { "0" } else { "" };
-
-    format!("#{}{:X}{}{:X}{}{:X}", r_str, r, g_str, g, b_str, b)
 }

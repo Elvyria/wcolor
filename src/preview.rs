@@ -62,10 +62,12 @@ impl Preview {
 
             context.BeginDraw();
 
+            context.Clear(&D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.0 });
+
             context.DrawGeometryRealization(self.ellipse.as_raw(), self.brush.as_raw() as _);
 
             let color = brush.GetColor();
-            let negative = D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+            let negative = D2D1_COLOR_F { r: 0.1, g: 0.1, b: 0.1, a: 1.0 };
             brush.SetColor(&negative as *const _);
 
             context.DrawGeometryRealization(self.stroke.as_raw(), self.brush.as_raw() as _);
@@ -164,7 +166,7 @@ pub fn create_preview() -> Result<Preview, Error> {
         (*context).CreateFilledGeometryRealization(ellipse_geometry as _, D2D1_DEFAULT_FLATTENING_TOLERANCE, &mut ellipse_realization);
 
         let mut stroke_realization: *mut ID2D1GeometryRealization = null_mut();
-        (*context).CreateStrokedGeometryRealization(ellipse_geometry as _, D2D1_DEFAULT_FLATTENING_TOLERANCE, 0.75, null_mut(), &mut stroke_realization);
+        (*context).CreateStrokedGeometryRealization(ellipse_geometry as _, D2D1_DEFAULT_FLATTENING_TOLERANCE, 1.3, null_mut(), &mut stroke_realization);
 
         (*ellipse_geometry).Release();
 
