@@ -5,9 +5,14 @@
 Lightweight color picker for Windows written in rust.  
 Get color from anywhere on your screen with mouse click. 
 
+## Installation
+``` shell
+cargo install wcolor
+```
+
 # Usage
 
-```
+``` shell
 wcolor.exe [FLAGS] [OPTIONS]
 
 FLAGS:
