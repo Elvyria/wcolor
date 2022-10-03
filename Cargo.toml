@@ -1,6 +1,6 @@
 [package]
 name = "wcolor"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Elvyria"]
 description = "Lightweight color picker for Windows"
 homepage = "https://github.com/Elvyria/wcolor"

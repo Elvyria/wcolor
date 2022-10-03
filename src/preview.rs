@@ -109,6 +109,8 @@ pub fn create_preview(size: u8) -> Result<Preview, Error> {
 
     let hwnd: HWND;
 
+    let border_size = 2;
+
     unsafe {
         let hinstance = GetModuleHandleW(null_mut());
 
@@ -132,8 +134,8 @@ pub fn create_preview(size: u8) -> Result<Preview, Error> {
             WS_POPUP | WS_VISIBLE,
             p.x + 20,
             p.y + 20,
-            size as i32 + 2,
-            size as i32 + 2,
+            size as i32 + 2 * border_size,
+            size as i32 + 2 * border_size,
             null_mut(),
             null_mut(),
             hinstance,
@@ -156,7 +158,7 @@ pub fn create_preview(size: u8) -> Result<Preview, Error> {
         (*context).CreateSolidColorBrush(&D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }, null_mut(), void!(brush, ID2D1SolidColorBrush));
 
         let radius = (size as f32) / 2.0;
-        let center = D2D1_POINT_2F { x: radius + 2.0, y: radius + 2.0 };
+        let center = D2D1_POINT_2F { x: radius + border_size as f32, y: radius + border_size as f32 };
         let ellipse = D2D1_ELLIPSE { point: center, radiusX: radius, radiusY: radius };
 
         let mut ellipse_geometry: *mut ID2D1EllipseGeometry = null_mut();
