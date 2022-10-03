@@ -104,7 +104,7 @@ unsafe extern "system" fn window_proc(hwnd: HWND, msg: u32, wparam: usize, lpara
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
-pub fn create_preview() -> Result<Preview, Error> {
+pub fn create_preview(size: u8) -> Result<Preview, Error> {
     let name = OsStr::new("wcolor").to_wide_null();
 
     let hwnd: HWND;
@@ -132,8 +132,8 @@ pub fn create_preview() -> Result<Preview, Error> {
             WS_POPUP | WS_VISIBLE,
             p.x + 20,
             p.y + 20,
-            24,
-            24,
+            size as i32 + 2,
+            size as i32 + 2,
             null_mut(),
             null_mut(),
             hinstance,
@@ -155,7 +155,7 @@ pub fn create_preview() -> Result<Preview, Error> {
         let mut brush: *mut ID2D1SolidColorBrush = null_mut();
         (*context).CreateSolidColorBrush(&D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }, null_mut(), void!(brush, ID2D1SolidColorBrush));
 
-        let radius = 10.0;
+        let radius = (size as f32) / 2.0;
         let center = D2D1_POINT_2F { x: radius + 2.0, y: radius + 2.0 };
         let ellipse = D2D1_ELLIPSE { point: center, radiusX: radius, radiusY: radius };
 

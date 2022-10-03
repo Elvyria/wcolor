@@ -16,14 +16,21 @@ use winapi::um::processthreadsapi::GetCurrentThreadId;
 
 #[derive(StructOpt)]
 struct Args {
+    /// Output format
     #[structopt(short = "f", long = "format", possible_values = &["HEX", "hex", "RGB"], default_value = "HEX")]
     format: String,
 
+    /// Disables preview window
     #[structopt(short = "n", long = "no-preview")]
     no_preview: bool,
 
+    /// Copy output to clipboard
     #[structopt(short = "c", long = "clipboard")]
     clipboard: bool,
+
+    /// Preview size (0-255)
+    #[structopt(short = "s", long = "size", default_value = "24")]
+    size: u8,
 }
 
 fn main() {
@@ -72,9 +79,9 @@ fn main() {
         PostThreadMessageW(thread_id, WM_QUIT, 0,0);
     });
 
-    if !args.no_preview {
+    if args.size > 0 && !args.no_preview {
         // TODO: Handle me gently
-        let mut preview = preview::create_preview().unwrap();
+        let mut preview = preview::create_preview(args.size).unwrap();
 
         unsafe {
             SetWindowLongPtrW(preview.hwnd, 0 , &mut preview as *mut Preview as _);
